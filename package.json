@@ -1,0 +1,26 @@
+{
+  "name": "highscore",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && node index.js -o run -f intervals"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/jsdom": "^21.1.2",
+    "@types/minimist": "^1.2.2",
+    "@types/node": "^20.4.8",
+    "@types/number-to-words": "^1.2.1",
+    "jsdom": "^22.1.0",
+    "mathjs": "^11.9.1",
+    "minimist": "^1.2.8",
+    "node-vexflow": "^0.1.2",
+    "number-to-words": "^1.2.4",
+    "tonal": "^5.0.0",
+    "typescript": "^5.1.6",
+    "vexflow": "^4.2.3"
+  }
+}
