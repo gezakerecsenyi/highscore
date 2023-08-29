@@ -10,7 +10,7 @@ export default class KeySpec implements Datum {
     id: string;
 
     constructor(id: string) {
-        this.id = id;
+        this.id = id.toUpperCase()[0] + id.toLowerCase().slice(1);
 
         try {
             const res = this.asPitch();
