@@ -47,6 +47,8 @@ comma-separated into a single entry.
 
 ### 2. Control statements
 
+The sub-statements of control statements should be indented, as in Python.
+
  - `if [condition]`: `[condition]` is checked loosely - that is, it is
 not required to be a `bool` type: all that matters is whether the passed
 object's internal `id` is equal to the value `"true"`.
@@ -148,3 +150,47 @@ and octave (e.g. `C#3`)
    - ID format: the contents of the string
    - Constructor:
      - Use double quotes `"`. Cannot be escaped as of the moment.
+
+### 4. Operators
+
+A range of available operators are available. The exact function of most of these
+is self-explanatory, but some special behaviours are listed:
+
+ - Casting, e.g. `<number>"5"` -> `5`
+ - Apply duration, e.g. `{1^2}<pitch>"C4"` -> a half-note `note` with pitch C4
+ - Multiply - `*`
+ - Divide - `/`
+ - Subtract - `-`
+ - Add - `+`
+   - Works for numbers, e.g. `1 + 1` -> `2`
+   - Works for string concatenation, e.g. `"1" + "1"` -> `"11"`
+   - Is the syntax for appending to an array, e.g.:
+     - `[5] + 6` -> `[5, 6]`
+     - `[5] + [6, 7]` -> `[5, 6, 7]`
+ - Comparison operators:
+   - `==`, `!=`
+   - Compare the `id`s of the provided operands
+ - Numeric comparison operators:
+   - `>`, `>=`, `<`, `<=`
+   - (Try to) coalesce the operands to numbers, and compare them thus
+ - Boolean 'and' - `&&`
+ - Boolean 'or' - `//`
+   - This is a little weird, just to avoid clashes with the `||` already in use
+for `notation` constructor syntax
+
+## Examples
+
+An example can be found in `intervals.hsc` in the root of this repository.
+
+## Open-source credits
+
+This package makes use of the following open-source packages:
+
+ - [`jsdom`](https://www.npmjs.com/package/jsdom)
+ - [`mathjs`](https://www.npmjs.com/package/mathjs)
+ - [`tonal`](https://www.npmjs.com/package/tonal)
+ - [`number-to-words`](https://www.npmjs.com/package/number-to-words)
+ - [`vexflow`](https://www.npmjs.com/package/vexflow)
+ - [`node-vexflow`](https://www.npmjs.com/package/node-vexflow)
+ - [`minimist`](https://www.npmjs.com/package/minimist)
+ - [`typescript`](https://www.npmjs.com/package/typescript)
