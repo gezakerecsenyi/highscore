@@ -54,4 +54,3 @@ object's internal `id` is equal to the value `"true"`.
 array, it will be coalesced into one, though the result of such automatic
 coalescence is not always ideal - so worth checking/doing manually instead.
 
-

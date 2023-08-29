@@ -229,5 +229,11 @@ interpretLevel(
     },
 );
 
+const logText = outputMap.map((e, i) => `\t[${i + 1}]: ${e}`).join('\n');
+const logPath = `${outputFolder}/log.txt`;
+fs.openSync(logPath, 'w');
+const stream = fs.createWriteStream(logPath);
+stream.write(logText);
+
 console.warn('Completed successfully. Outputting log below:\n');
-console.log(outputMap.map((e, i) => `\t[${i + 1}]: ${e}`).join('\n'));
+console.log(logText);

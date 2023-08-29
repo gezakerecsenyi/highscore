@@ -3,3 +3,6 @@ node_modules
 .git
 .idea
 package-lock.json
+
+**.mp3
+**.png
