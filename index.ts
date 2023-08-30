@@ -82,18 +82,27 @@ const nestSection = (block: DepthMap[]): Block[] => {
 
 const blocks = nestSection(depthMappedLines);
 
+class VariableMap {
+    data: DataMap;
+    constructor(data: DataMap) {
+        this.data = data;
+    }
+
+    update(key: string, value: Datum) {
+        this.data[key] = value;
+        return this;
+    }
+}
+
 let outputMap = [] as string[];
-const interpretLevel = (level: Block[], variableMap: DataMap) => {
-    const variableMapHere = Object.assign(
-        {},
-        variableMap,
-    );
+const interpretLevel = (level: Block[], variableMap: VariableMap) => {
+    const variableMapHere = new VariableMap({...variableMap.data});
     for (let {continuation, line, index} of level) {
-        const parseExpressionSafely = (e: string, variableMap: DataMap) => {
+        const parseExpressionSafely = (e: string, variableMap: VariableMap) => {
             try {
                 return parseExpression(
                     e,
-                    variableMap,
+                    variableMap.data,
                 );
             } catch (e) {
                 throw new HighScoreError(`Could not parse on line ${index} - ${e}.`);
@@ -147,10 +156,7 @@ const interpretLevel = (level: Block[], variableMap: DataMap) => {
             (loopObj as ArraySpec).storedData.forEach(datum => {
                 interpretLevel(
                     continuation,
-                    {
-                        ...variableMapHere,
-                        [loopVarName]: datum,
-                    },
+                    variableMapHere.update(loopVarName, datum),
                 );
             });
             continue;
@@ -175,9 +181,20 @@ const interpretLevel = (level: Block[], variableMap: DataMap) => {
 
         const varMatch = line.match(/(\$[a-zA-Z0-9_]+) *:= *([^\n]+$)/);
         if (varMatch) {
-            variableMapHere[varMatch[1]] = parseExpressionSafely(
+            const val = parseExpressionSafely(
                 varMatch[2],
                 variableMapHere,
+            );
+            if (variableMap.data.hasOwnProperty(varMatch[1])) {
+                variableMap.update(
+                    varMatch[1],
+                    val
+                );
+            }
+
+            variableMapHere.update(
+                varMatch[1],
+                val
             );
             continue;
         }
@@ -218,7 +235,7 @@ const interpretLevel = (level: Block[], variableMap: DataMap) => {
 const allNotes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
 interpretLevel(
     blocks,
-    {
+    new VariableMap({
         '$KEYS': new ArraySpec<DataType.Key>(
             Mode
                 .names()
@@ -226,7 +243,7 @@ interpretLevel(
                 .flat(),
             DataType.Key,
         ),
-    },
+    }),
 );
 
 const logText = outputMap.map((e, i) => `\t[${i + 1}]: ${e}`).join('\n');

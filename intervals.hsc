@@ -1,4 +1,4 @@
-for $key in <key>[[A-G#]]:
+for $key in $KEYS:
     for $note1 in <pitch>$key:
         for $note2 in (<pitch>$key)[[$i -> $i != $note1]]:
             $difference := <interval>|| $note1, $note2 ||

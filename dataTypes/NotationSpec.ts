@@ -60,7 +60,7 @@ export default class NotationSpec implements Datum {
 
         let eventualKeyName = keyName;
         let tonic = keyName.split(' ')[0];
-        if (keyName.toLowerCase().endsWith(' minor')) {
+        if (keyName.toLowerCase().endsWith(' minor') || keyName.toLowerCase().endsWith(' aeolian')) {
             tonic += 'm';
         } else if (!keyName.toLowerCase().endsWith(' major')) {
             const mode = keyName.split(' ')[1];
@@ -77,9 +77,18 @@ export default class NotationSpec implements Datum {
             eventualKeyName = 'C major';
         }
 
-        const noteNamesInKey = Scale
+        let noteNamesInKey = Scale
             .get(eventualKeyName)
             .notes;
+
+        if (noteNamesInKey.some(t => t.endsWith('##') || t.endsWith('bb'))) {
+            tonic = Note.enharmonic(tonic);
+
+            const keyNameParts = eventualKeyName.split(' ');
+            noteNamesInKey = Scale
+                .get(`${Note.enharmonic(keyNameParts[0])} ${keyNameParts[1]}`)
+                .notes;
+        }
 
         const canvas = createCanvas();
         const renderer = new Renderer(
