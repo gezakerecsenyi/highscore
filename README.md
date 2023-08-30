@@ -178,6 +178,15 @@ is self-explanatory, but some special behaviours are listed:
    - This is a little weird, just to avoid clashes with the `||` already in use
 for `notation` constructor syntax
 
+### 5. Array operations
+
+A few special operations are available for array types specifically:
+
+ - `$array[[ $i -> $i > 5 ]]` filters an array, keeping only items where the executed predicate
+is 'truthy'
+ - `$array[[ $i => $i + 1 ]]` maps an array, replacing each item with the result of the predicate
+when called with that item
+
 ## Examples
 
 An example can be found in `intervals.hsc` in the root of this repository.
