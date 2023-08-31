@@ -59,23 +59,26 @@ export default class NotationSpec implements Datum {
 
     toMidi(bpm: number) {
         const midi = new Midi();
+        midi.header.setTempo(bpm);
+
         const track = midi.addTrack();
 
         let timeNow = 0;
         (this.notes.storedData as NoteSpec[]).forEach(note => {
-            const duration = note.duration.asNumber().value / (4 * bpm);
+            const durationInSeconds = 60 * 4 * note.duration.asNumber().value / bpm;
+            const durationInTicks = midi.header.secondsToTicks(durationInSeconds);
 
             (note.chord.pitches.storedData as PitchSpec[]).forEach(pitch => {
                 track.addNote(
                     {
                         midi: pitch.position,
-                        time: timeNow,
-                        duration,
+                        ticks: timeNow,
+                        durationTicks: durationInTicks,
                     },
                 );
             });
 
-            timeNow += duration;
+            timeNow += durationInTicks;
         });
 
         return midi;
@@ -267,7 +270,7 @@ export default class NotationSpec implements Datum {
 
         fs.writeFileSync(
             `${rawFileName}.mid`,
-            new Buffer(this.toMidi(bpm).toArray()),
+            Buffer.from(this.toMidi(bpm).toArray()),
         );
 
         const command = `fluidsynth -ni "./${soundFont}" "./${rawFileName}.mid" -F "./${rawFileName}.wav" -T wav -r 44100`;

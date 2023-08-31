@@ -300,10 +300,11 @@ interpretLevel(
     blocks,
     new VariableMap({
         '$KEYS': new ArraySpec<DataType.Key>(
-            Mode
+            /*Mode
                 .names()
                 .map(e => allNotes.map(q => new KeySpec(`${q} ${e}`)))
-                .flat(),
+                .flat(),*/
+            [new KeySpec('A Major')],
             DataType.Key,
         ),
     }),
