@@ -12,7 +12,7 @@ const args = minimist(process.argv.slice(2));
 
 const inputFile = args.f as string;
 if (!inputFile) {
-    throw new Error('No entry file specified. Please specify a file to compile using the -f flag, e.g. "-f index.hsc".');
+    throw new HighScoreError('No entry file specified. Please specify a file to compile using the --f flag, e.g. "--f index.hsc".');
 }
 
 let outputFolder = args.o as string;
@@ -25,9 +25,36 @@ if (fs.existsSync(outputFolder)){
     if (fs.readdirSync(outputFolder).length > 0) {
         console.warn(`The output folder ./${outputFolder}/ is not empty. Resulting files will be overwritten.`)
     }
-} else{
+} else {
     fs.mkdirSync(outputFolder);
 }
+
+let soundFontSource = args.sf as string;
+if (!soundFontSource) {
+    throw new HighScoreError('No sound font file specified. Please specify a sound font file (.sf2 or similar) using the --sf flag, e.g. "--sf ./Piano.sf2"');
+}
+
+let bpmStr = args.bpm as string;
+let bpm = 60;
+if (bpmStr) {
+    bpm = parseInt(bpmStr);
+}
+if (!bpm || bpm < 0) {
+    bpm = 60;
+    console.warn('The BPM specification is malformed or missing. Specify this using the --bpm flag, e.g. "--bpm 100". Reverting to default (60).');
+}
+
+let freqStr = args.log as string;
+let logFrequency = 100;
+if (freqStr) {
+    logFrequency = parseInt(freqStr);
+}
+if (!logFrequency) {
+    logFrequency = 100;
+    console.warn('The log frequency specification is malformed or missing. Specify this using the --freq flag, e.g. "--freq 10". Reverting to default (100).');
+}
+
+const noLog = logFrequency <= 0;
 
 const cleanedName = inputFile.replace(
     /\.hsc$/g,
@@ -95,6 +122,7 @@ class VariableMap {
 }
 
 let outputMap = [] as string[];
+let rendered = 0;
 const interpretLevel = (level: Block[], variableMap: VariableMap) => {
     const variableMapHere = new VariableMap({...variableMap.data});
 
@@ -249,7 +277,16 @@ const interpretLevel = (level: Block[], variableMap: VariableMap) => {
                 );
             }
 
-            (toRender as NotationSpec).render(`${outputFolder}/${stringifiedDest.id}`);
+            (toRender as NotationSpec).render(
+                `${outputFolder}/${stringifiedDest.id}`,
+                bpm,
+                soundFontSource
+            );
+            rendered++;
+
+            if (!noLog && rendered % logFrequency === 0) {
+                console.warn(`HighScore: rendered ${rendered} entries so far.`);
+            }
 
             continue;
         }
@@ -272,11 +309,14 @@ interpretLevel(
     }),
 );
 
-const logText = outputMap.map((e, i) => `\t[${i + 1}]: ${e}`).join('\n');
 const logPath = `${outputFolder}/log.txt`;
 fs.openSync(logPath, 'w');
 const stream = fs.createWriteStream(logPath);
-stream.write(logText);
+stream.write(
+    outputMap.map((e, i) => `${i+1},${e}`).join('\n')
+);
 
 console.warn('Completed successfully. Outputting log below:\n');
-console.log(logText);
+console.log(
+    outputMap.map((e, i) => `\t[${i + 1}]: ${e}`).join('\n')
+);

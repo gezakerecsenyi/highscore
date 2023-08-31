@@ -1,4 +1,4 @@
-import { DataType, Datum } from '../types';
+import { DataType, Datum, HighScoreError } from '../types';
 import StringSpec from './StringSpec';
 import NumberSpec from './NumberSpec';
 import ArraySpec from './ArraySpec';
@@ -8,9 +8,12 @@ import PitchSpec from './PitchSpec';
 
 import { createCanvas, writeImage } from 'node-vexflow';
 
-import { Accidental, Dot, Flow, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow';
-import { Key, Midi, Mode, Note, Scale } from 'tonal';
+import { Accidental, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow';
+import { Mode, Note, Scale } from 'tonal';
 import NoteSpec from './NoteSpec';
+import { Midi } from '@tonejs/midi';
+import fs from 'fs';
+import { exec } from 'child_process';
 
 export default class NotationSpec implements Datum {
     type = DataType.Notation as const;
@@ -54,8 +57,32 @@ export default class NotationSpec implements Datum {
         return this.notes;
     }
 
+    toMidi(bpm: number) {
+        const midi = new Midi();
+        const track = midi.addTrack();
+
+        let timeNow = 0;
+        (this.notes.storedData as NoteSpec[]).forEach(note => {
+            const duration = note.duration.asNumber().value / (4 * bpm);
+
+            (note.chord.pitches.storedData as PitchSpec[]).forEach(pitch => {
+                track.addNote(
+                    {
+                        midi: pitch.position,
+                        time: timeNow,
+                        duration,
+                    },
+                );
+            });
+
+            timeNow += duration;
+        });
+
+        return midi;
+    }
+
     // todo: handle different clefs; multiple bars; ties
-    render(destination: string) {
+    render(destination: string, bpm: number, soundFont: string) {
         const keyName = this.key.asString().id;
 
         let eventualKeyName = keyName;
@@ -130,8 +157,8 @@ export default class NotationSpec implements Datum {
         const voice = new Voice(
             {
                 num_beats: this.timeSignature.numerator,
-                beat_value: this.timeSignature.denominator
-            }
+                beat_value: this.timeSignature.denominator,
+            },
         );
 
         this
@@ -155,9 +182,9 @@ export default class NotationSpec implements Datum {
                     .pitches
                     .storedData
                     .map(t => (t as PitchSpec)
-                            .asString()
-                            .id
-                            .split(/([0-9]+$)/g)
+                        .asString()
+                        .id
+                        .split(/([0-9]+$)/g),
                     );
 
                 let modifiersNeeded = [] as [Accidental, number][];
@@ -174,16 +201,16 @@ export default class NotationSpec implements Datum {
                             modifiersNeeded.push(
                                 [
                                     new Accidental(e[0].slice(-1)),
-                                    i
-                                ]
+                                    i,
+                                ],
                             );
                         }
                     } else { // we need a natural
                         modifiersNeeded.push(
                             [
                                 new Accidental('n'),
-                                i
-                            ]
+                                i,
+                            ],
                         );
                     }
                 });
@@ -192,11 +219,14 @@ export default class NotationSpec implements Datum {
                     {
                         keys: notesHere.map(t => `${t[0]}/${t[1]}`),
                         duration: `${noteDurationName}${dotString}`,
-                    }
-                )
+                    },
+                );
 
                 modifiersNeeded.forEach(t => {
-                    staveNote.addModifier(t[0], t[1]);
+                    staveNote.addModifier(
+                        t[0],
+                        t[1],
+                    );
                 });
 
                 for (let d = 0; d < noteDuration.dotCount; d++) {
@@ -204,23 +234,69 @@ export default class NotationSpec implements Datum {
                         [staveNote],
                         {
                             all: true,
-                        }
+                        },
                     );
                 }
 
                 voice.addTickable(staveNote);
             });
 
-        new Formatter().joinVoices([voice]).format([voice], 350);
-        voice.draw(context, stave);
+        new Formatter().joinVoices([voice])
+            .format(
+                [voice],
+                350,
+            );
+        voice.draw(
+            context,
+            stave,
+        );
 
+        const rawFileName = /\.(png|svg|jpg|jpeg|mp3|wav|ogg|mid)/g.test(destination) ?
+            destination
+                .split('.')
+                .slice(
+                    0,
+                    -1,
+                )
+                .join('.') :
+            destination;
         writeImage(
             canvas,
-            `${
-                /\.(png|svg|jpg|jpeg|mp3|wav)/g.test(destination) ? 
-                    destination.split('.').slice(0, -1).join('.') :
-                    destination
-            }.png`,
+            `${rawFileName}.png`,
+        );
+
+        fs.writeFileSync(
+            `${rawFileName}.mid`,
+            new Buffer(this.toMidi(bpm).toArray()),
+        );
+
+        const command = `fluidsynth -ni "./${soundFont}" "./${rawFileName}.mid" -F "./${rawFileName}.wav" -T wav -r 44100`;
+        exec(
+            command,
+            (error, stdout, stderr) => {
+                if (error || stderr.trim().length) {
+                    console.warn(
+                        `HighScore: something went wrong while compiling ${rawFileName}.wav. Ensure that FluidSynth is installed and available from the current path, and that the provided sound-font file is valid.`,
+                    );
+                    console.warn('Further details of the error are below:');
+
+                    throw new HighScoreError(
+                        `Error in generating .wav from .mid file.
+
+Attempting to run:
+    ${command}
+
+Got logs:
+    ${stdout}
+
+Got error:
+    ${stderr}
+
+`);
+                } else {
+                    fs.unlinkSync(`${rawFileName}.mid`);
+                }
+            },
         );
     }
 }

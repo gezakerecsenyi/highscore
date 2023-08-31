@@ -6,20 +6,46 @@ This repository contains the interpreter for HighScore, a language
 designed to make generating basic music score engravings and
 corresponding audio files simple and consistent.
 
+## Installation
+
+You will need a few things for setup:
+
+ - A functioning Node.JS install
+ - The TypeScript command-line utility
+ - A globally-installed version of [FluidSynth](https://github.com/FluidSynth/fluidsynth/wiki/Download)
+ - A sound-font file (`.sf2` preferable)
+
+To build the code:
+
+```
+npm install
+tsc
+```
+
+Then, proceed as listed under 'Usage' below.
+
 ## Usage
 
 The basic usage of this interpreter is by calling the main file
 using `node`:
 
 ```
-node index.js -f index.hsc -o output_folder
+node index.js --f index.hsc --o output_folder --sf Piano.sf2 --bpm 60 --log 100
 ```
 
-The program takes two arguments:
+The program takes up to five arguments (two required, three optional):
 
- - `-f [file]` (required) - designates the HighScore file to run. 
+ - `--f [file]` (required) - designates the HighScore file to run. 
 This can include the `.hsc` extension, but this is not required.
- - `-o [folder]` - designates the folder in which to dump all of
+ - `--sf [file]` (required) - the path to a valid `.sf2` or similar
+sound font file, to be used for generating audio samples. Some good
+options can be downloaded for free
+[here](https://musical-artifacts.com/artifacts?formats=sf2&tags=piano).
+ - `--bpm [number]` - the BPM to use for audio exports. This defaults to 60.
+ - `--log [number]` - provides a status-update log to the console after every 
+`[number]`th entry. This defaults to 100. Setting to any value `<= 0` will 
+disable logging. 
+ - `--o [folder]` - designates the folder in which to dump all of
 the generated content. If this is left unspecified, a random folder
 name will be generated and logged at runtime.
 
@@ -34,7 +60,7 @@ declared in one scope are accessible by all lower, but no higher scopes -
 as is the case in most languages. Variables can freely be redeclared using
 this syntax, too.
  - `render [notation] as [name]` compiles the given notation object -
-that is, outputs a corresponding pair of `.mp3` and `.png` files, with
+that is, outputs a corresponding pair of `.wav` and `.png` files, with
 the audio and engraving of the notation respectively. `[name]` should
 be a string without any extensions, as the two files will take this name
 root and append the relevant extension. The files will be outputted to

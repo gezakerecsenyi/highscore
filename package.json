@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && node index.js -o run -f intervals"
+    "build": "tsc && node index.js --o run --bpm 60 --sf IK_Berlin_Grand_Piano.sf2 --log 100 --f intervals"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@tonejs/midi": "^2.0.28",
     "@types/jsdom": "^21.1.2",
     "@types/minimist": "^1.2.2",
     "@types/node": "^20.4.8",
