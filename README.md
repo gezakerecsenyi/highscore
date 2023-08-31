@@ -49,9 +49,10 @@ comma-separated into a single entry.
 
 The sub-statements of control statements should be indented, as in Python.
 
- - `if [condition]`: `[condition]` is checked loosely - that is, it is
+ - `if [condition]:`: `[condition]` is checked loosely - that is, it is
 not required to be a `bool` type: all that matters is whether the passed
 object's internal `id` is equal to the value `"true"`.
+   - `else:` can directly follow an `if` statement.
  - `for $var in [array]:` does the expected. If `[array]` is not yet an
 array, it will be coalesced into one, though the result of such automatic
 coalescence is not always ideal - so worth checking/doing manually instead.

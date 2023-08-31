@@ -81,6 +81,9 @@ export default class NotationSpec implements Datum {
             .get(eventualKeyName)
             .notes;
 
+        // if we have weird double-sharps, it probably means an irregular key name was specified (e.g. A#maj).
+        // in this case, just to make life simpler, we just change it to its enharmonic (Bbmaj) to avoid the
+        // artefacts. Can be changed in future if this is in fact desired behaviour.
         if (noteNamesInKey.some(t => t.endsWith('##') || t.endsWith('bb'))) {
             tonic = Note.enharmonic(tonic);
 
@@ -214,11 +217,10 @@ export default class NotationSpec implements Datum {
         writeImage(
             canvas,
             `${
-                /\.(png|svg|jpg|jpeg)/g.test(destination) ? 
+                /\.(png|svg|jpg|jpeg|mp3|wav)/g.test(destination) ? 
                     destination.split('.').slice(0, -1).join('.') :
                     destination
             }.png`,
         );
-
     }
 }

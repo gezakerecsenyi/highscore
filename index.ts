@@ -97,6 +97,9 @@ class VariableMap {
 let outputMap = [] as string[];
 const interpretLevel = (level: Block[], variableMap: VariableMap) => {
     const variableMapHere = new VariableMap({...variableMap.data});
+
+    let elseLatch = null;
+
     for (let {continuation, line, index} of level) {
         const parseExpressionSafely = (e: string, variableMap: VariableMap) => {
             try {
@@ -119,13 +122,36 @@ const interpretLevel = (level: Block[], variableMap: VariableMap) => {
             const condition = parseExpressionSafely(data[1], variableMapHere);
 
             if (condition.id === 'true') {
+                elseLatch = true;
+                interpretLevel(
+                    continuation,
+                    variableMapHere,
+                );
+            } else {
+                elseLatch = false;
+            }
+
+            continue;
+        }
+
+        if (line === 'else:') {
+            if (elseLatch === null) {
+                throw new HighScoreError(`SyntaxError on line ${index} - Invalid or malformed else statement (no corresponding 'if')`);
+            }
+
+            if (elseLatch === false) {
                 interpretLevel(
                     continuation,
                     variableMapHere,
                 );
             }
 
+            elseLatch = null;
             continue;
+        }
+
+        if (line.trim()) {
+            elseLatch = null;
         }
 
         if (line.startsWith('for ')) {
