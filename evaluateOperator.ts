@@ -1,11 +1,27 @@
-import { DataType, Datum } from './types';
-import { operators } from './parseExpression';
-import StringSpec from './dataTypes/StringSpec';
-import NumberSpec from './dataTypes/NumberSpec';
 import ArraySpec from './dataTypes/ArraySpec';
 import BooleanSpec from './dataTypes/BooleanSpec';
+import ChordSpec from './dataTypes/ChordSpec';
+import IntervalSpec from './dataTypes/IntervalSpec';
+import NoteSpec from './dataTypes/NoteSpec';
+import NumberSpec from './dataTypes/NumberSpec';
+import PitchSpec from './dataTypes/PitchSpec';
+import StringSpec from './dataTypes/StringSpec';
+import { operators } from './parseExpression';
+import { DataType, Datum } from './types';
 
 export default function evaluateOperator(operator: typeof operators[number], operand1: Datum, operand2: Datum): Datum {
+    const addToChord = (chord: ChordSpec, intervalSize: number) => new ChordSpec(
+        new ArraySpec(
+            chord
+                .pitches
+                .storedData
+                .map(t => new PitchSpec(
+                    (t as PitchSpec).position + intervalSize
+                )),
+            DataType.Pitch,
+        )
+    )
+
     switch (operator) {
         case "*":
             if (operand1.type === DataType.Number && operand2.type === DataType.Number) {
@@ -40,6 +56,21 @@ export default function evaluateOperator(operator: typeof operators[number], ope
                 );
             }
 
+            if (operand1.type === DataType.Note && operand2.type === DataType.Interval) {
+                return new NoteSpec(
+                    addToChord((operand1 as NoteSpec).chord, (operand2 as IntervalSpec).asNumber().value),
+                    (operand1 as NoteSpec).duration
+                );
+            }
+
+            if (operand1.type === DataType.Chord && operand2.type === DataType.Interval) {
+                return addToChord((operand1 as ChordSpec), (operand2 as IntervalSpec).asNumber().value)
+            }
+
+            if (operand1.type === DataType.Pitch && operand2.type === DataType.Interval) {
+                return new PitchSpec((operand1 as PitchSpec).position + (operand2 as IntervalSpec).asNumber().value);
+            }
+
             if (operand1.type === DataType.Array && operand2.type === DataType.Array) {
                 const arr1 = operand1 as ArraySpec;
                 const arr2 = operand2 as ArraySpec;
@@ -72,6 +103,21 @@ export default function evaluateOperator(operator: typeof operators[number], ope
                 return new NumberSpec(
                     (operand1 as NumberSpec).value - (operand2 as NumberSpec).value
                 );
+            }
+
+            if (operand1.type === DataType.Note && operand2.type === DataType.Interval) {
+                return new NoteSpec(
+                    addToChord((operand1 as NoteSpec).chord, -(operand2 as IntervalSpec).asNumber().value),
+                    (operand1 as NoteSpec).duration
+                );
+            }
+
+            if (operand1.type === DataType.Chord && operand2.type === DataType.Interval) {
+                return addToChord((operand1 as ChordSpec), -(operand2 as IntervalSpec).asNumber().value)
+            }
+
+            if (operand1.type === DataType.Pitch && operand2.type === DataType.Interval) {
+                return new PitchSpec((operand1 as PitchSpec).position - (operand2 as IntervalSpec).asNumber().value);
             }
             break;
         case "&&":
